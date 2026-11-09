@@ -75,7 +75,7 @@ def parse_market_metrics(ticker):
         close_series = pd.Series(df['Close'].values.flatten())
         rsi_vals = ta.momentum.RSIIndicator(close=close_series).rsi().fillna(50.0).values
         ema_vals = ta.trend.EMAIndicator(close=close_series, window=200).ema_indicator().fillna(close_series).values
-        atr_vals = ta.volatility.AverageTrueRange(high=df['High'], low=df['Low'], close=df['Close']).average_true_range().fillna(close_series * 0.002).values
+        atr_vals = ta.volatility.AverageTrueRange(high=df['High'], low=df['Low'], close=close_series).average_true_range().fillna(close_series * 0.002).values
         
         macd_obj = ta.trend.MACD(close=close_series)
         macd_line = macd_obj.macd().fillna(0.0).values
@@ -199,17 +199,11 @@ def draw_high_fidelity_research_chart(df, ticker, metrics, suggested_sl, suggest
 user_query = st.text_input("💬 Query Your Research Agent (e.g., 'Perform comprehensive macro research on Gold Ounce Futures'):", value="")
 
 if user_query:
-    # --- 24/7 DYNAMIC VOCABULARY ASSET MAPPER CORE ---
-    target_ticker = "BTC-USD" 
     clean_query = user_query.upper().replace("?", "").replace("'", "")
     
-    vocabulary_asset_matrix = {
-        "GOLD": "GC=F", 
-        "SILVER": "SI=F", 
-        "RAND": "USDZAR=X", 
-        "ZAR": "USDZAR=X",
-        "YEN": "USDJPY=X", 
-        "POUND": "GBPUSD=X", 
-        "EURO": "EURUSD=X", 
-        "NASDAQ": "^NDX",
-        "TECH": "^NDX", 
+    # 🛰️ NEW COMPRESSED STRUCTURAL ASSET PARSER: 100% immune to missing closing brace syntax errors
+    target_ticker = "BTC-USD"
+    
+    if "GOLD" in clean_query: target_ticker = "GC=F"
+    elif "SILVER" in clean_query: target_ticker = "SI=F"
+    elif "RAND" in clean_query or "ZAR" in clean_query: target_ticker = "USDZAR=X"
