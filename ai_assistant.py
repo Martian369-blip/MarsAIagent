@@ -9,38 +9,52 @@ import plotly.graph_objects as go
 from datetime import datetime
 import g4f
 
-# --- STREAMLIT PAGE SETUP ---
-st.set_page_config(page_title="MARS AI Assistant", page_icon="🧠", layout="wide")
+# --- MASTER LAYOUT INITIALIZATION CORE ---
+st.set_page_config(page_title="MARS AI Master Agent", page_icon="🛸", layout="wide")
 
-# ==================== ADVANCED VISUAL GRAPHIC STYLING ====================
+JOURNAL_FILE = "trading_journal.csv"
+
+# ==================== INSTITUTIONAL GRAPHIC INJECTIONS ====================
 st.markdown("""
     <style>
-    .ai-bubble {
-        background-color: #1e222b;
+    .report-title-card {
+        background: linear-gradient(135deg, #1e2638 0%, #0d111a 100%);
         padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #2d3748;
+        margin-bottom: 20px;
+    }
+    .ai-research-block {
+        background-color: #0f121d;
+        padding: 22px;
         border-radius: 10px;
         border-left: 4px solid #3498db;
-        margin-bottom: 12px;
-        color: white;
-        font-family: sans-serif;
-        line-height: 1.6;
+        color: #e2e8f0;
+        font-family: 'Segoe UI', sans-serif;
+        line-height: 1.7;
+        margin-bottom: 15px;
     }
-    .metric-tag {
+    .tech-metric-tag {
+        background-color: #1a202c;
+        padding: 4px 10px;
+        border-radius: 4px;
+        border: 1px solid #4a5568;
         color: #ff9900;
+        font-family: monospace;
         font-weight: bold;
     }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🧠 MARS CORE: AI NATURAL INTELLIGENCE CO-PILOT")
-st.caption("Conversational Trade Sizing & Sentiment Network Core")
+st.title("🛸 MARS_AGENT V16.0: MASTER OMNI-RESEARCH DESK")
+st.caption("Advanced Conversational NLP Analytics Engine & Visual Media Network Core")
 
 # Lateral parameters base
-st.sidebar.markdown("### 🛡️ Capital Profile")
-wallet_base = st.sidebar.number_input("Wallet Balance (ZAR)", value=1000.00)
-risk_slider = st.sidebar.slider("Max Allowed Allocation Risk (%)", 1.0, 10.0, 5.0)
+st.sidebar.markdown("### 🛡️ Capital Security Desk")
+wallet_base = st.sidebar.number_input("Wallet Allocation Balance (ZAR)", value=1000.00)
+risk_slider = st.sidebar.slider("Maximum Allowed Risk Threshold (%)", 1.0, 10.0, 5.0)
 
-# ==================== ANALYTICS DATA ENGINE INJECTORS ====================
+# ==================== DATA ARCHITECTURE COMPILATION LAYER ====================
 def parse_market_metrics(ticker):
     try:
         feed = yf.Ticker(ticker)
@@ -52,11 +66,18 @@ def parse_market_metrics(ticker):
         ema_vals = ta.trend.EMAIndicator(close=close_series, window=200).ema_indicator().fillna(close_series).values
         atr_vals = ta.volatility.AverageTrueRange(high=df['High'], low=df['Low'], close=df['Close']).average_true_range().fillna(close_series * 0.002).values
         
+        # MACD metrics indicators
+        macd_obj = ta.trend.MACD(close=close_series)
+        macd_line = macd_obj.macd().fillna(0.0).values
+        macd_signal = macd_obj.macd_signal().fillna(0.0).values
+        
         return {
             "price": float(df['Close'].iloc[-1]),
             "rsi": float(rsi_vals[-1]),
             "ema200": float(ema_vals[-1]),
             "atr": float(atr_vals[-1]),
+            "macd_l": float(macd_line[-1]),
+            "macd_s": float(macd_signal[-1]),
             "ticker_obj": feed
         }, df
     except Exception:
@@ -69,7 +90,7 @@ def extract_news_headlines():
         req = urllib.request.Request(rss_url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=5) as response:
             root = ET.fromstring(response.read())
-            for item in root.findall('.//item')[:4]:
+            for item in root.findall('.//item')[:5]:
                 title = item.find('title')
                 if title is not None and title.text:
                     headlines.append(title.text)
@@ -78,49 +99,33 @@ def extract_news_headlines():
     return headlines
 
 def generate_hardened_local_synthesis(ticker, metrics, wallet, max_risk_pct):
-    """
-    Algorithmic Interception Layer: Synthesizes a structured financial 
-    co-pilot report locally from data elements when cloud servers loop noise.
-    """
-    price = metrics["price"]
-    ema = metrics["ema200"]
-    rsi = metrics["rsi"]
-    atr = metrics["atr"]
+    price, ema, rsi, atr = metrics["price"], metrics["ema200"], metrics["rsi"], metrics["atr"]
+    regime = "🟢 UPTREND ACCUMULATION" if price > ema else "🔴 DOWNTREND DISTRIBUTION"
     
-    # 1. Trend Regime Definition
-    regime = "🟢 UPTREND (BULLISH ACCUMULATION)" if price > ema else "🔴 DOWNTREND (BEARISH DISTRIBUTION)"
-    
-    # 2. Risk Sizing Logic Engine
     mult = 10000 if "USD" in ticker and "=" in ticker else 1
     sl_distance_pts = (atr * 2.0) * mult
     
-    # Estimate raw ZAR cost bounds for a standard 0.01 lot contract
     if "ZAR" in ticker:
         raw_zar_risk = (atr * 2.0) * 10000 * 0.10
-    elif "=" in ticker:  # Global FX
+    elif "=" in ticker:
         raw_zar_risk = (atr * 2.0) * 10000 * 0.01 * 18.35
-    elif ticker == "GC=F":  # Standard 100oz Gold Contract
+    elif ticker == "GC=F":
         raw_zar_risk = (atr * 2.0) * 1.00 * 18.35 * 100
-    else:  # General Commodities / Equities
+    else:
         raw_zar_risk = (atr * 2.0) * 1.00 * 18.35
         
     actual_risk_pct = (raw_zar_risk / wallet) * 100
-    risk_status = "✅ APPROVED" if actual_risk_pct <= max_risk_pct else "❌ REJECTED (EXCEEDS SAFETY CAP)"
+    risk_status = "✅ RISK METRICS APPROVED" if actual_risk_pct <= max_risk_pct else "❌ REJECTED (EXCEEDS PERMITTED SAFE ASSIGNMENT)"
     
-    # 3. Dynamic Stop Formatter
     suggested_sl = price - (atr * 2.0) if price > ema else price + (atr * 2.0)
     suggested_tp = price + (atr * 4.0) if price > ema else price - (atr * 4.0)
     
     report = (
-        f"### 🛰️ MARS Strategic Analysis Matrix: {ticker}\n\n"
-        f"1. **Market Regime Profile:** Currently trading inside a **{regime}** relative to the 200 Hourly EMA framework. "
-        f"The current price is trading at <span class='metric-tag'>{price:.4f}</span> with an RSI momentum coordinates score of **{rsi:.1f}**, signaling short-term trend extensions.\n\n"
-        f"2. **Risk Parameters & Protection Vectors (0.01 Micro Sizing):**\n"
-        f"   - 🛑 **Suggested Stop Loss (SL):** `{suggested_sl:.4f}` (~{sl_distance_pts:.1f} points away)\n"
-        f"   - 🏁 **Suggested Take Profit (TP):** `{suggested_tp:.4f}` (Calibrated for a clean 1:2 Risk-to-Reward profile)\n\n"
-        f"3. **Capital Guard Evaluation Ticket:** Real cash portfolio exposure is calculated at **R{raw_zar_risk:.2f}** per 0.01 lot configuration. "
-        f"Against your R{wallet:.2f} baseline, this represents an account exposure profile of **{actual_risk_pct:.1f}%**. "
-        f"**Sizing Status:** `{risk_status}`. Adjust your entry orders manually inside your mobile terminal to match these boundary layers."
+        f"📋 **HARDENED LOCAL SYNTHESIS RISK BRIEFING FOR {ticker}**\n\n"
+        f"• **Regime Structural State:** The asset is currently executing a trend phase inside an **{regime}** relative to its hourly 200 Exponential Moving Average baseline marker.\n"
+        f"• **Momentum Oscillator Parameters:** RSI index coordinates are sitting at **{rsi:.1f}**, confirming active momentum boundaries.\n"
+        f"• **Execution Sizing Blueprint (0.01 Contracts):** Suggested Stop Loss is mapped to `{suggested_sl:.4f}` (~{sl_distance_pts:.1f} pts away) with a target Take Profit corridor projected near `{suggested_tp:.4f}`.\n"
+        f"• **Capital Defense Ledger Evaluation:** Opening this trade costs an estimated **R{raw_zar_risk:.2f}** in potential risk exposure boundary. Against your wallet budget, this totals **{actual_risk_pct:.1f}%** exposure status. `Sizing Decision: {risk_status}`."
     )
     return report
 
@@ -136,77 +141,69 @@ def run_ai_inference(prompt_text):
     except Exception:
         return "FALLBACK_TRIGGERED"
 
-# ==================== MASTER ASSISTANT WORKSPACE ====================
-user_query = st.text_input("💬 Ask your AI Trading Co-Pilot (e.g., 'Analyze EURUSD=X' or 'Is GBPUSD=X a buy?'):", value="")
+# ==================== MASTER ANALYSIS WORKSPACE ENTRY ====================
+user_query = st.text_input("💬 Query Your Research Agent (e.g., 'Perform comprehensive macro research on Gold Ounce Futures'):", value="")
 
 if user_query:
-    st.markdown("### 🧠 AI Analysis Pipeline Output")
-    
-    # ==================== ADVANCED CONVERSATIONAL ASSET MAPPER ====================
-    # Default fallback asset node
-    target_ticker = "EURUSD=X" 
+    # --- INTERLOCK 24/7 DYNAMIC VOCABULARY ASSET MAPPER ---
+    target_ticker = "BTC-USD" 
     clean_query = user_query.upper().replace("?", "").replace("'", "")
     
-    # High-intuition vocabulary index mapping rules
     vocabulary_asset_matrix = {
-        "GOLD": "GC=F",
-        "SILVER": "SI=F",
-        "RAND": "USDZAR=X",
-        "ZAR": "USDZAR=X",
-        "YEN": "USDJPY=X",
-        "POUND": "GBPUSD=X",
-        "EURO": "EURUSD=X",
-        "NASDAQ": "^NDX",
-        "TECH": "^NDX",
-        "DOW": "^DJI",
-        "CRUDE": "CL=F",
-        "OIL": "BZ=F",
-        "SASOL": "SOL.JO",
-        "BITCOIN": "BTC-USD",
-        "CRYPTO": "BTC-USD"
+        "GOLD": "GC=F", "SILVER": "SI=F", "RAND": "USDZAR=X", "ZAR": "USDZAR=X",
+        "YEN": "USDJPY=X", "POUND": "GBPUSD=X", "EURO": "EURUSD=X", "NASDAQ": "^NDX",
+        "TECH": "^NDX", "CRUDE": "CL=F", "OIL": "BZ=F", "BITCOIN": "BTC-USD", "CRYPTO": "BTC-USD"
     }
-    
-    # Rule 1: Scan for plain-text conversational keywords first
     for keyword, ticker_symbol in vocabulary_asset_matrix.items():
         if keyword in clean_query:
             target_ticker = ticker_symbol
             break
-            
-    # Rule 2: Override with direct tickers if explicitly provided by user
     words = clean_query.split()
     for word in words:
         if "=" in word or "-" in word or ".JO" in word or "^" in word:
             target_ticker = word
             break
-            
-    # Process market background arrays natively
+
+    st.markdown(f"<div class='report-title-card'>📊 <b>INTELLIGENCE INTERFACE FOCUS NODE:</b> {target_ticker}</div>", unsafe_allow_html=True)
+    
     metrics, history_df = parse_market_metrics(target_ticker)
     global_news = extract_news_headlines()
     
     if metrics:
         news_summary = " | ".join(global_news) if global_news else "Consolidated trend volume flow stable."
         
+        # Expanded multi-indicator systemic system prompt structure configuration
         ai_context_prompt = (
-            f"Provide a brief, tactical trading assessment in 3 bullet points maximum for {target_ticker}. "
-            f"Spot Price: {metrics['price']}. RSI: {metrics['rsi']:.2f}. 200 EMA: {metrics['ema200']:.2f}. "
-            f"Enforce strict capital defense warnings tailored for a small R{wallet_base} account budget profile."
+            f"You are the ultimate advanced institutional quantitative investment AI research assistant. "
+            f"Provide an incredibly thorough, professional, and dense technical report analyzing: {target_ticker}.\n"
+            f"Live Statistics Baseline Data:\n"
+            f"- Price: {metrics['price']}\n"
+            f"- RSI Oscillator Value: {metrics['rsi']:.2f}\n"
+            f"- 200 EMA Moving Average: {metrics['ema200']:.2f}\n"
+            f"- ATR Volatility: {metrics['atr']:.4f}\n"
+            f"- MACD Line: {metrics['macd_l']:.4f} | Signal Line: {metrics['macd_s']:.4f}\n"
+            f"- News Wire Backdrop Context: {news_summary}\n\n"
+            f"Format your response as a rich, multi-paragraph document with explicit markdown subheaders. "
+            f"Section 1: Thorough Technical Analysis breakdown explaining MACD crossover status and price orientation relative to 200 hourly EMA. "
+            f"Section 2: Deep Market Sentiment Hypothesis drawing conclusions from recent headlines. "
+            f"Section 3: Rigorous Sizing & Protective Risk Parameters. Calculate a safe 2x ATR stop level and contrast the resulting Rand cash loss value against a capital wallet baseline of R{wallet_base} under a max risk cap configuration of {risk_slider}%."
         )
         
-        with st.spinner("🧠 Synthesizing real-time analytics matrix..."):
+        with st.spinner("🛸 Activating cognitive analytical modules... Processing real-time data arrays..."):
             ai_response_text = run_ai_inference(ai_context_prompt)
             
-        # Hardened Interception check to instantly override provider garbage strings
         if not ai_response_text or "FALLBACK_TRIGGERED" in ai_response_text or "Copilot" in str(ai_response_text) or "Install" in str(ai_response_text):
-            final_output_report = generate_hardened_local_synthesis(target_ticker, metrics, wallet_base, risk_slider)
+            final_report_body = generate_hardened_local_synthesis(target_ticker, metrics, wallet_base, risk_slider)
         else:
-            final_output_report = str(ai_response_text)
+            final_report_body = str(ai_response_text)
             
-        st.markdown(f"<div class='ai-bubble'>{final_output_report}</div>", unsafe_allow_html=True)
+        # Display the rich, multi-paragraph research response bubble
+        st.markdown(f"<div class='ai-research-block'>{final_report_body}</div>", unsafe_allow_html=True)
         
-        with st.expander("📊 View Reference Strategy Chart Matrix"):
-            fig = go.Figure()
-            fig.add_trace(go.Candlestick(x=history_df.tail(60).index, open=history_df.tail(60)['Open'], high=history_df.tail(60)['High'], low=history_df.tail(60)['Low'], close=history_df.tail(60)['Close']))
-            fig.update_layout(xaxis_rangeslider_visible=False, template="plotly_dark", height=380, margin=dict(l=10, r=10, t=10, b=10))
-            st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("Searching broad global context... Please explicitly type a valid ticker symbol (like EURUSD=X) to pull real-time execution matrices.")
+        # --- TECHNICAL METRICS DASHBOARD STATUS PANEL ROW ---
+        st.markdown("### 🎛️ Live Indicator Reference Telemetry Desk")
+        m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+        with m_col1:
+            st.markdown(f"**Trend Engine Baseline**<br><span class='tech-metric-tag'>200 EMA: {metrics['ema200']:.4f}</span>", unsafe_allow_html=True)
+        with m_col2:
+            st.markdown(f"**Momentum Oscillator**<br><span class='tech-metric-tag'>RSI Index: {metrics['rsi']:.1f}</span>", unsafe_allow_html=True)
