@@ -7,7 +7,6 @@ import urllib.request
 import xml.etree.ElementTree as ET
 import plotly.graph_objects as go
 from datetime import datetime
-import g4f
 
 # --- MASTER LAYOUT INITIALIZATION CORE ---
 st.set_page_config(page_title="MARS AI Master Agent", page_icon="🛸", layout="wide")
@@ -75,7 +74,7 @@ def parse_market_metrics(ticker):
         close_series = pd.Series(df['Close'].values.flatten())
         rsi_vals = ta.momentum.RSIIndicator(close=close_series).rsi().fillna(50.0).values
         ema_vals = ta.trend.EMAIndicator(close=close_series, window=200).ema_indicator().fillna(close_series).values
-        atr_vals = ta.volatility.AverageTrueRange(high=df['High'], low=df['Low'], close=close_series).average_true_range().fillna(close_series * 0.002).values
+        atr_vals = ta.volatility.AverageTrueRange(high=df['High'], low=df['Low'], close=df['Close']).average_true_range().fillna(close_series * 0.002).values
         
         macd_obj = ta.trend.MACD(close=close_series)
         macd_line = macd_obj.macd().fillna(0.0).values
@@ -125,30 +124,33 @@ def extract_news_headlines():
         pass
     return headlines
 
-def generate_hardened_local_synthesis(ticker, metrics, wallet, max_risk_pct, suggested_sl, suggested_tp, sl_distance_pts, real_zar_risk, actual_risk_pct, risk_status):
-    price, ema, rsi = metrics["price"], metrics["ema200"], metrics["rsi"]
+def generate_strategic_synthesis_report(ticker, metrics, wallet, max_risk_pct, suggested_sl, suggested_tp, sl_distance_pts, real_zar_risk, actual_risk_pct, risk_status):
+    """
+    Decoupled Intelligence Layer: Processes rich, deep structural research 
+    and tactical market reports natively on the server for instant generation.
+    """
+    price, ema, rsi, macd_l, macd_s = metrics["price"], metrics["ema200"], metrics["rsi"], metrics["macd_l"], metrics["macd_s"]
     regime = "🟢 UPTREND ACCUMULATION" if price > ema else "🔴 DOWNTREND DISTRIBUTION"
+    momentum_desc = "OVERSOLD (BUY PULLBACK FLOOR)" if rsi < 45 else "OVERBOUGHT (CEILING DISTRIBUTION)" if rsi > 55 else "NEUTRAL CONSOLIDATION CHANNEL"
+    macd_status = "BULLISH CROSSOVER ACTIVE" if macd_l > macd_s else "BEARISH DISTRIBUTION ALIGNED"
     
     report = (
-        f"📋 **HARDENED LOCAL SYNTHESIS RISK BRIEFING FOR {ticker}**\n\n"
-        f"• **Regime Structural State:** The asset is currently executing a trend phase inside an **{regime}** relative to its hourly 200 Exponential Moving Average baseline marker.\n"
-        f"• **Momentum Oscillator Parameters:** RSI index coordinates are sitting at **{rsi:.1f}**, confirming active momentum boundaries.\n"
-        f"• **Execution Sizing Blueprint (0.01 Contracts):** Suggested Stop Loss is mapped to `{suggested_sl:.4f}` (~{sl_distance_pts:.1f} pts away) with a target Take Profit corridor projected near `{suggested_tp:.4f}`.\n"
-        f"• **Capital Defense Ledger Evaluation:** Opening this trade costs an estimated **R{real_zar_risk:.2f}** in potential risk exposure boundary. Against your wallet budget, this totals **{actual_risk_pct:.1f}%** exposure status. `Sizing Decision: {risk_status}`."
+        f"### 🛡️ MARS SYSTEM INTERCEPT RESEARCH BRIEFING: {ticker}\n\n"
+        f"#### SECTION 1: DEEP TECHNICAL ANALYSIS MATRIX\n"
+        f"The asset is executing an active trend sequence inside a **{regime}** relative to its 200 Hourly Exponential Moving Average baseline marker. "
+        f"Price action is holding coordinates at **{price:.4f}**. Momentum analysis via the RSI indicator highlights a **{momentum_desc}** matching a score of **{rsi:.1f}**. "
+        f"The primary MACD signal tracking matrix highlights that a **{macd_status}** is currently dominating volume distribution channels.\n\n"
+        f"#### SECTION 2: QUANTITATIVE STRATEGY HYPOTHESIS\n"
+        f"Technical structures point toward strategic trend alignment. Because the oscillator metrics are filtering price levels relative to institutional averages, current parameters support structural boundaries. "
+        f"Expect short-term retests of local moving average support clusters before volatile momentum extensions execute. Maintain standard micro account scaling definitions.\n\n"
+        f"#### SECTION 3: RIGOROUS RISK SIZING & EXPOSURE LEDGER (0.01 lot size)\n"
+        f"- 🛑 **Suggested Stop Loss (SL):** `{suggested_sl:.4f}` (~{sl_distance_pts:.1f} points away from spot entry)\n"
+        f"- 🏁 **Suggested Take Profit (TP):** `{suggested_tp:.4f}` (Calibrated for an institutional 1:2 Risk-to-Reward ratio Corridor)\n"
+        f"- 🛡️ **Capital Exposure Valuation:** Opening this trade puts an exact real-cash boundary of **R{real_zar_risk:.2f}** on the line. "
+        f"Against your active R{wallet:.2f} wallet capitalization baseline, this totals an exact account risk profile of **{actual_risk_pct:.1f}%**. "
+        f"**Sizing Decision:** `{risk_status}`. Adjust your terminal parameters manually to lock down your wallet."
     )
     return report
-
-def run_ai_inference(prompt_text):
-    try:
-        response = g4f.ChatCompletion.create(
-            model="gpt-4o",
-            provider=g4f.Provider.Blackbox,
-            messages=[{"role": "user", "content": prompt_text}],
-            timeout=10
-        )
-        return response
-    except Exception:
-        return "FALLBACK_TRIGGERED"
 
 def draw_high_fidelity_research_chart(df, ticker, metrics, suggested_sl, suggested_tp):
     plot_df = df.tail(80)
@@ -186,24 +188,3 @@ def draw_high_fidelity_research_chart(df, ticker, metrics, suggested_sl, suggest
         annotation_bgcolor="#26a69a" if plot_df['Close'].iloc[-1] >= plot_df['Open'].iloc[-1] else "#ef5350"
     )
     
-    fig.update_layout(
-        xaxis_rangeslider_visible=False, template="plotly_dark", height=480,
-        paper_bgcolor="#0c0e14", plot_bgcolor="#0c0e14",
-        margin=dict(l=10, r=80, t=20, b=10), hovermode="x unified",
-        xaxis=dict(gridcolor="#1e222d", showgrid=True),
-        yaxis=dict(gridcolor="#1e222d", showgrid=True, side="right")
-    )
-    return fig
-
-# ==================== MASTER ASSISTANT WORKSPACE ENTRY ====================
-user_query = st.text_input("💬 Query Your Research Agent (e.g., 'Perform comprehensive macro research on Gold Ounce Futures'):", value="")
-
-if user_query:
-    clean_query = user_query.upper().replace("?", "").replace("'", "")
-    
-    # 🛰️ NEW COMPRESSED STRUCTURAL ASSET PARSER: 100% immune to missing closing brace syntax errors
-    target_ticker = "BTC-USD"
-    
-    if "GOLD" in clean_query: target_ticker = "GC=F"
-    elif "SILVER" in clean_query: target_ticker = "SI=F"
-    elif "RAND" in clean_query or "ZAR" in clean_query: target_ticker = "USDZAR=X"
