@@ -125,10 +125,6 @@ def extract_news_headlines():
     return headlines
 
 def generate_strategic_synthesis_report(ticker, metrics, wallet, max_risk_pct, suggested_sl, suggested_tp, sl_distance_pts, real_zar_risk, actual_risk_pct, risk_status):
-    """
-    Decoupled Intelligence Layer: Processes rich, deep structural research 
-    and tactical market reports natively on the server for instant generation.
-    """
     price, ema, rsi, macd_l, macd_s = metrics["price"], metrics["ema200"], metrics["rsi"], metrics["macd_l"], metrics["macd_s"]
     regime = "🟢 UPTREND ACCUMULATION" if price > ema else "🔴 DOWNTREND DISTRIBUTION"
     momentum_desc = "OVERSOLD (BUY PULLBACK FLOOR)" if rsi < 45 else "OVERBOUGHT (CEILING DISTRIBUTION)" if rsi > 55 else "NEUTRAL CONSOLIDATION CHANNEL"
@@ -188,3 +184,6 @@ def draw_high_fidelity_research_chart(df, ticker, metrics, suggested_sl, suggest
         annotation_bgcolor="#26a69a" if plot_df['Close'].iloc[-1] >= plot_df['Open'].iloc[-1] else "#ef5350"
     )
     
+    fig.update_layout(
+        xaxis_rangeslider_visible=False, template="plotly_dark", height=480,
+        paper_bgcolor="#0c0e14", plot_bgcolor="#0c0e14",
