@@ -189,6 +189,6 @@ def draw_high_fidelity_research_chart(df, ticker, metrics, suggested_sl, suggest
     return fig
 
 # ==================== MASTER ASSISTANT WORKSPACE ENTRY ====================
-# 🎯 PLACED FIRST DOWN THE SCRIPT: Forces the query search text box to show up immediately
 user_query = st.text_input("💬 Query Your Research Agent (e.g., 'Perform comprehensive macro research on Gold Ounce Futures'):", value="GOLD")
 
+# 🚀 THE MASTER TRIGGER ACCELERATOR CORNER: Force execution via a structural button node
