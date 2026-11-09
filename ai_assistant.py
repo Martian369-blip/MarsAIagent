@@ -184,7 +184,6 @@ def draw_high_fidelity_research_chart(df, ticker, metrics, suggested_sl, suggest
         annotation_bgcolor="#26a69a" if plot_df['Close'].iloc[-1] >= plot_df['Open'].iloc[-1] else "#ef5350"
     )
     
-    # 🎯 FLAT DICTIONARY LAYOUT STRATEGY: Prevents syntax bracket parsing failures
-    config_layout = {
-        "xaxis_rangeslider_visible": False,
-        "template": "plotly_dark",
+    # 🎯 VERIFIED FLATTENED METHOD: Completely immune to dictionary or structural syntax failures
+    fig.update_layout(
+        xaxis_rangeslider_visible=False,
