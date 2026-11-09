@@ -40,7 +40,7 @@ st.sidebar.markdown("### 🛡️ Capital Profile")
 wallet_base = st.sidebar.number_input("Wallet Balance (ZAR)", value=1000.00)
 risk_slider = st.sidebar.slider("Max Allowed Allocation Risk (%)", 1.0, 10.0, 5.0)
 
-# ==================== ANALYTICAL DATA ENGINE INJECTORS ====================
+# ==================== ANALYTICS DATA ENGINE INJECTORS ====================
 def parse_market_metrics(ticker):
     try:
         feed = yf.Ticker(ticker)
@@ -89,7 +89,6 @@ def generate_hardened_local_synthesis(ticker, metrics, wallet, max_risk_pct):
     
     # 1. Trend Regime Definition
     regime = "🟢 UPTREND (BULLISH ACCUMULATION)" if price > ema else "🔴 DOWNTREND (BEARISH DISTRIBUTION)"
-    proximity = abs(price - ema) / ema * 100
     
     # 2. Risk Sizing Logic Engine
     mult = 10000 if "USD" in ticker and "=" in ticker else 1
@@ -100,7 +99,9 @@ def generate_hardened_local_synthesis(ticker, metrics, wallet, max_risk_pct):
         raw_zar_risk = (atr * 2.0) * 10000 * 0.10
     elif "=" in ticker:  # Global FX
         raw_zar_risk = (atr * 2.0) * 10000 * 0.01 * 18.35
-    else:  # Commodities / Equities
+    elif ticker == "GC=F":  # Standard 100oz Gold Contract
+        raw_zar_risk = (atr * 2.0) * 1.00 * 18.35 * 100
+    else:  # General Commodities / Equities
         raw_zar_risk = (atr * 2.0) * 1.00 * 18.35
         
     actual_risk_pct = (raw_zar_risk / wallet) * 100
@@ -125,7 +126,6 @@ def generate_hardened_local_synthesis(ticker, metrics, wallet, max_risk_pct):
 
 def run_ai_inference(prompt_text):
     try:
-        # Forcing a reliable, alternate free provider channel to clear noise
         response = g4f.ChatCompletion.create(
             model="gpt-4o",
             provider=g4f.Provider.Blackbox,
@@ -142,14 +142,44 @@ user_query = st.text_input("💬 Ask your AI Trading Co-Pilot (e.g., 'Analyze EU
 if user_query:
     st.markdown("### 🧠 AI Analysis Pipeline Output")
     
-    # Isolate ticker token from query string string arrays
-    target_ticker = "EURUSD=X"
-    words = user_query.upper().replace("?", "").replace("'", "").split()
+    # ==================== ADVANCED CONVERSATIONAL ASSET MAPPER ====================
+    # Default fallback asset node
+    target_ticker = "EURUSD=X" 
+    clean_query = user_query.upper().replace("?", "").replace("'", "")
+    
+    # High-intuition vocabulary index mapping rules
+    vocabulary_asset_matrix = {
+        "GOLD": "GC=F",
+        "SILVER": "SI=F",
+        "RAND": "USDZAR=X",
+        "ZAR": "USDZAR=X",
+        "YEN": "USDJPY=X",
+        "POUND": "GBPUSD=X",
+        "EURO": "EURUSD=X",
+        "NASDAQ": "^NDX",
+        "TECH": "^NDX",
+        "DOW": "^DJI",
+        "CRUDE": "CL=F",
+        "OIL": "BZ=F",
+        "SASOL": "SOL.JO",
+        "BITCOIN": "BTC-USD",
+        "CRYPTO": "BTC-USD"
+    }
+    
+    # Rule 1: Scan for plain-text conversational keywords first
+    for keyword, ticker_symbol in vocabulary_asset_matrix.items():
+        if keyword in clean_query:
+            target_ticker = ticker_symbol
+            break
+            
+    # Rule 2: Override with direct tickers if explicitly provided by user
+    words = clean_query.split()
     for word in words:
-        if "=" in word or "-" in word or ".JO" in word:
+        if "=" in word or "-" in word or ".JO" in word or "^" in word:
             target_ticker = word
             break
             
+    # Process market background arrays natively
     metrics, history_df = parse_market_metrics(target_ticker)
     global_news = extract_news_headlines()
     
