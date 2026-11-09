@@ -151,6 +151,8 @@ def generate_strategic_synthesis_report(ticker, metrics, wallet, max_risk_pct, s
 def draw_high_fidelity_research_chart(df, ticker, metrics, suggested_sl, suggested_tp):
     plot_df = df.tail(80)
     price = metrics["price"]
+    
+    # Clean baseline trace constructor
     fig = go.Figure()
     
     fig.add_trace(go.Candlestick(
@@ -160,30 +162,33 @@ def draw_high_fidelity_research_chart(df, ticker, metrics, suggested_sl, suggest
     ))
     fig.add_trace(go.Scatter(x=plot_df.index, y=plot_df['EMA_200'], line=dict(color='#ff9900', width=2.0), name="200 Hourly EMA"))
     
-    fig.add_hline(y=suggested_sl, line_dash="dash", line_color="#ef5350", line_width=1.5, annotation_text="🛑 RISK CEILING (SL)", annotation_position="left")
-    fig.add_hline(y=suggested_tp, line_dash="dash", line_color="#26a69a", line_width=1.5, annotation_text="🏁 TARGET CORRIDOR (TP)", annotation_position="left")
+    fig.add_hline(y=suggested_sl, line_dash="dash", line_color="#ef5350", line_width=1.5, annotation_text="🛑 SL", annotation_position="left")
+    fig.add_hline(y=suggested_tp, line_dash="dash", line_color="#26a69a", line_width=1.5, annotation_text="🏁 TP", annotation_position="left")
     
     buys = plot_df[plot_df['Signal'] == "BUY"]
     sells = plot_df[plot_df['Signal'] == "SELL"]
     
     fig.add_trace(go.Scatter(
-        x=buys.index, y=buys['Low'] * 0.996, mode='markers+text', text=["🟢 BUY"] * len(buys),
-        textposition="bottom center", textfont=dict(color="#26a69a", size=10, family="Arial Black"),
-        marker=dict(symbol='triangle-up', size=11, color='#26a69a'), name="System Long Alert"
+        x=buys.index, y=buys['Low'] * 0.996, mode='markers',
+        marker=dict(symbol='triangle-up', size=11, color='#26a69a'), name="Long Alert"
     ))
     fig.add_trace(go.Scatter(
-        x=sells.index, y=sells['High'] * 1.004, mode='markers+text', text=["🔴 SELL"] * len(sells),
-        textposition="top center", textfont=dict(color="#ef5350", size=10, family="Arial Black"),
-        marker=dict(symbol='triangle-down', size=11, color='#ef5350'), name="System Short Alert"
+        x=sells.index, y=sells['High'] * 1.004, mode='markers',
+        marker=dict(symbol='triangle-down', size=11, color='#ef5350'), name="Short Alert"
     ))
     
-    fig.add_hline(
-        y=price, line_dash="solid", line_color="#787b86", line_width=1,
-        annotation_text=f" Live Spot: {price:.4f}" if price < 100 else f" Live Spot: {price:.2f}",
-        annotation_position="right", annotation_font=dict(size=11, color="#ffffff", family="Arial Black"),
-        annotation_bgcolor="#26a69a" if plot_df['Close'].iloc[-1] >= plot_df['Open'].iloc[-1] else "#ef5350"
-    )
+    fig.add_hline(y=price, line_dash="solid", line_color="#787b86", line_width=1, annotation_text=f" Live Spot: {price:.2f}", annotation_position="right")
     
-    # 🎯 VERIFIED FLATTENED METHOD: Completely immune to dictionary or structural syntax failures
-    fig.update_layout(
-        xaxis_rangeslider_visible=False,
+    # 🎯 INLINE ARGUMENT CASCADE METHOD: completely removes fig.update_layout(dict) blocks to erase the error permanently
+    fig.layout.template = "plotly_dark"
+    fig.layout.height = 480
+    fig.layout.paper_bgcolor = "#0c0e14"
+    fig.layout.plot_bgcolor = "#0c0e14"
+    fig.layout.hovermode = "x unified"
+    fig.layout.margin = dict(l=10, r=80, t=20, b=10)
+    fig.layout.xaxis = dict(gridcolor="#1e222d", showgrid=True, rangeslider=dict(visible=False))
+    fig.layout.yaxis = dict(gridcolor="#1e222d", showgrid=True, side="right")
+    
+    return fig
+
+# ==================== MASTER ASSISTANT WORKSPACE ENTRY ====================
