@@ -71,6 +71,19 @@ def parse_market_metrics(ticker):
         macd_line = macd_obj.macd().fillna(0.0).values
         macd_signal = macd_obj.macd_signal().fillna(0.0).values
         
+        df['RSI'] = rsi_vals
+        df['EMA_200'] = ema_vals
+        df['ATR'] = atr_vals
+        
+        # Inject trading signal tracking natively inside history loop arrays
+        df['Signal'] = "HOLD"
+        for i in range(len(df)):
+            if i < 200: continue
+            if (rsi_vals[i] < 45) and (df['Close'].iloc[i] > ema_vals[i]):
+                df.loc[df.index[i], 'Signal'] = "BUY"
+            elif (rsi_vals[i] > 55) and (df['Close'].iloc[i] < ema_vals[i]):
+                df.loc[df.index[i], 'Signal'] = "SELL"
+                
         return {
             "price": float(df['Close'].iloc[-1]),
             "rsi": float(rsi_vals[-1]),
@@ -98,34 +111,16 @@ def extract_news_headlines():
         pass
     return headlines
 
-def generate_hardened_local_synthesis(ticker, metrics, wallet, max_risk_pct):
-    price, ema, rsi, atr = metrics["price"], metrics["ema200"], metrics["rsi"], metrics["atr"]
+def generate_hardened_local_synthesis(ticker, metrics, wallet, max_risk_pct, suggested_sl, suggested_tp, sl_distance_pts, real_zar_risk, actual_risk_pct, risk_status):
+    price, ema, rsi = metrics["price"], metrics["ema200"], metrics["rsi"]
     regime = "🟢 UPTREND ACCUMULATION" if price > ema else "🔴 DOWNTREND DISTRIBUTION"
-    
-    mult = 10000 if "USD" in ticker and "=" in ticker else 1
-    sl_distance_pts = (atr * 2.0) * mult
-    
-    if "ZAR" in ticker:
-        raw_zar_risk = (atr * 2.0) * 10000 * 0.10
-    elif "=" in ticker:
-        raw_zar_risk = (atr * 2.0) * 10000 * 0.01 * 18.35
-    elif ticker == "GC=F":
-        raw_zar_risk = (atr * 2.0) * 1.00 * 18.35 * 100
-    else:
-        raw_zar_risk = (atr * 2.0) * 1.00 * 18.35
-        
-    actual_risk_pct = (raw_zar_risk / wallet) * 100
-    risk_status = "✅ RISK METRICS APPROVED" if actual_risk_pct <= max_risk_pct else "❌ REJECTED (EXCEEDS PERMITTED SAFE ASSIGNMENT)"
-    
-    suggested_sl = price - (atr * 2.0) if price > ema else price + (atr * 2.0)
-    suggested_tp = price + (atr * 4.0) if price > ema else price - (atr * 4.0)
     
     report = (
         f"📋 **HARDENED LOCAL SYNTHESIS RISK BRIEFING FOR {ticker}**\n\n"
         f"• **Regime Structural State:** The asset is currently executing a trend phase inside an **{regime}** relative to its hourly 200 Exponential Moving Average baseline marker.\n"
         f"• **Momentum Oscillator Parameters:** RSI index coordinates are sitting at **{rsi:.1f}**, confirming active momentum boundaries.\n"
         f"• **Execution Sizing Blueprint (0.01 Contracts):** Suggested Stop Loss is mapped to `{suggested_sl:.4f}` (~{sl_distance_pts:.1f} pts away) with a target Take Profit corridor projected near `{suggested_tp:.4f}`.\n"
-        f"• **Capital Defense Ledger Evaluation:** Opening this trade costs an estimated **R{raw_zar_risk:.2f}** in potential risk exposure boundary. Against your wallet budget, this totals **{actual_risk_pct:.1f}%** exposure status. `Sizing Decision: {risk_status}`."
+        f"• **Capital Defense Ledger Evaluation:** Opening this trade costs an estimated **R{real_zar_risk:.2f}** in potential risk exposure boundary. Against your wallet budget, this totals **{actual_risk_pct:.1f}%** exposure status. `Sizing Decision: {risk_status}`."
     )
     return report
 
@@ -141,11 +136,70 @@ def run_ai_inference(prompt_text):
     except Exception:
         return "FALLBACK_TRIGGERED"
 
-# ==================== MASTER ANALYSIS WORKSPACE ENTRY ====================
+# ==================== ADVANCED VISUAL CHARTING HUB (TRADINGVIEW CORE) ====================
+def draw_high_fidelity_research_chart(df, ticker, metrics, suggested_sl, suggested_tp):
+    """
+    Renders an institutional-grade research chart displaying active prices,
+    protection zones, and floating directional strategy alert tokens.
+    """
+    plot_df = df.tail(80)
+    price = metrics["price"]
+    
+    fig = go.Figure()
+    
+    # 1. TradingView High-Vis Candlestick Bars
+    fig.add_trace(go.Candlestick(
+        x=plot_df.index, open=plot_df['Open'], high=plot_df['High'], low=plot_df['Low'], close=plot_df['Close'], name="Candles",
+        increasing_line_color='#26a69a', increasing_fill_color='#26a69a',
+        decreasing_line_color='#ef5350', decreasing_fill_color='#ef5350'
+    ))
+    
+    # 2. Smooth 200 EMA Baseline Marker
+    fig.add_trace(go.Scatter(
+        x=plot_df.index, y=plot_df['EMA_200'], line=dict(color='#ff9900', width=2.0), name="200 Hourly EMA"
+    ))
+    
+    # 3. Target Risk Protection Boundaries (SL Red Shading / TP Green Shading)
+    fig.add_hline(y=suggested_sl, line_dash="dash", line_color="#ef5350", line_width=1.5, annotation_text="🛑 RISK CEILING (SL)", annotation_position="left")
+    fig.add_hline(y=suggested_tp, line_dash="dash", line_color="#26a69a", line_width=1.5, annotation_text="🏁 TARGET CORRIDOR (TP)", annotation_position="left")
+    
+    # 4. Floating System Execution Badges
+    buys = plot_df[plot_df['Signal'] == "BUY"]
+    sells = plot_df[plot_df['Signal'] == "SELL"]
+    
+    fig.add_trace(go.Scatter(
+        x=buys.index, y=buys['Low'] * 0.996, mode='markers+text', text=["🟢 BUY"] * len(buys),
+        textposition="bottom center", textfont=dict(color="#26a69a", size=10, family="Arial Black"),
+        marker=dict(symbol='triangle-up', size=11, color='#26a69a'), name="System Long Alert"
+    ))
+    fig.add_trace(go.Scatter(
+        x=sells.index, y=sells['High'] * 1.004, mode='markers+text', text=["🔴 SELL"] * len(sells),
+        textposition="top center", textfont=dict(color="#ef5350", size=10, family="Arial Black"),
+        marker=dict(symbol='triangle-down', size=11, color='#ef5350'), name="System Short Alert"
+    ))
+    
+    # 5. Live Tracking Margin Tag Line
+    fig.add_hline(
+        y=price, line_dash="solid", line_color="#787b86", line_width=1,
+        annotation_text=f" Live Spot: {price:.4f}" if price < 100 else f" Live Spot: {price:.2f}",
+        annotation_position="right", annotation_font=dict(size=11, color="#ffffff", family="Arial Black"),
+        annotation_bgcolor="#26a69a" if plot_df['Close'].iloc[-1] >= plot_df['Open'].iloc[-1] else "#ef5350"
+    )
+    
+    # Layout Configs
+    fig.update_layout(
+        xaxis_rangeslider_visible=False, template="plotly_dark", height=480,
+        paper_bgcolor="#0c0e14", plot_bgcolor="#0c0e14",
+        margin=dict(l=10, r=80, t=20, b=10), hovermode="x unified",
+        xaxis=dict(gridcolor="#1e222d", showgrid=True),
+        yaxis=dict(gridcolor="#1e222d", showgrid=True, side="right") # TV standard right-side pricing
+    )
+    return fig
+
+# ==================== MASTER ASSISTANT WORKSPACE ENTRY ====================
 user_query = st.text_input("💬 Query Your Research Agent (e.g., 'Perform comprehensive macro research on Gold Ounce Futures'):", value="")
 
 if user_query:
-    # --- INTERLOCK 24/7 DYNAMIC VOCABULARY ASSET MAPPER ---
     target_ticker = "BTC-USD" 
     clean_query = user_query.upper().replace("?", "").replace("'", "")
     
@@ -166,44 +220,3 @@ if user_query:
 
     st.markdown(f"<div class='report-title-card'>📊 <b>INTELLIGENCE INTERFACE FOCUS NODE:</b> {target_ticker}</div>", unsafe_allow_html=True)
     
-    metrics, history_df = parse_market_metrics(target_ticker)
-    global_news = extract_news_headlines()
-    
-    if metrics:
-        news_summary = " | ".join(global_news) if global_news else "Consolidated trend volume flow stable."
-        
-        # Expanded multi-indicator systemic system prompt structure configuration
-        ai_context_prompt = (
-            f"You are the ultimate advanced institutional quantitative investment AI research assistant. "
-            f"Provide an incredibly thorough, professional, and dense technical report analyzing: {target_ticker}.\n"
-            f"Live Statistics Baseline Data:\n"
-            f"- Price: {metrics['price']}\n"
-            f"- RSI Oscillator Value: {metrics['rsi']:.2f}\n"
-            f"- 200 EMA Moving Average: {metrics['ema200']:.2f}\n"
-            f"- ATR Volatility: {metrics['atr']:.4f}\n"
-            f"- MACD Line: {metrics['macd_l']:.4f} | Signal Line: {metrics['macd_s']:.4f}\n"
-            f"- News Wire Backdrop Context: {news_summary}\n\n"
-            f"Format your response as a rich, multi-paragraph document with explicit markdown subheaders. "
-            f"Section 1: Thorough Technical Analysis breakdown explaining MACD crossover status and price orientation relative to 200 hourly EMA. "
-            f"Section 2: Deep Market Sentiment Hypothesis drawing conclusions from recent headlines. "
-            f"Section 3: Rigorous Sizing & Protective Risk Parameters. Calculate a safe 2x ATR stop level and contrast the resulting Rand cash loss value against a capital wallet baseline of R{wallet_base} under a max risk cap configuration of {risk_slider}%."
-        )
-        
-        with st.spinner("🛸 Activating cognitive analytical modules... Processing real-time data arrays..."):
-            ai_response_text = run_ai_inference(ai_context_prompt)
-            
-        if not ai_response_text or "FALLBACK_TRIGGERED" in ai_response_text or "Copilot" in str(ai_response_text) or "Install" in str(ai_response_text):
-            final_report_body = generate_hardened_local_synthesis(target_ticker, metrics, wallet_base, risk_slider)
-        else:
-            final_report_body = str(ai_response_text)
-            
-        # Display the rich, multi-paragraph research response bubble
-        st.markdown(f"<div class='ai-research-block'>{final_report_body}</div>", unsafe_allow_html=True)
-        
-        # --- TECHNICAL METRICS DASHBOARD STATUS PANEL ROW ---
-        st.markdown("### 🎛️ Live Indicator Reference Telemetry Desk")
-        m_col1, m_col2, m_col3, m_col4 = st.columns(4)
-        with m_col1:
-            st.markdown(f"**Trend Engine Baseline**<br><span class='tech-metric-tag'>200 EMA: {metrics['ema200']:.4f}</span>", unsafe_allow_html=True)
-        with m_col2:
-            st.markdown(f"**Momentum Oscillator**<br><span class='tech-metric-tag'>RSI Index: {metrics['rsi']:.1f}</span>", unsafe_allow_html=True)
