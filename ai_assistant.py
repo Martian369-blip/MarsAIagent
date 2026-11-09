@@ -151,8 +151,6 @@ def generate_strategic_synthesis_report(ticker, metrics, wallet, max_risk_pct, s
 def draw_high_fidelity_research_chart(df, ticker, metrics, suggested_sl, suggested_tp):
     plot_df = df.tail(80)
     price = metrics["price"]
-    
-    # Clean baseline trace constructor
     fig = go.Figure()
     
     fig.add_trace(go.Candlestick(
@@ -179,7 +177,6 @@ def draw_high_fidelity_research_chart(df, ticker, metrics, suggested_sl, suggest
     
     fig.add_hline(y=price, line_dash="solid", line_color="#787b86", line_width=1, annotation_text=f" Live Spot: {price:.2f}", annotation_position="right")
     
-    # 🎯 INLINE ARGUMENT CASCADE METHOD: completely removes fig.update_layout(dict) blocks to erase the error permanently
     fig.layout.template = "plotly_dark"
     fig.layout.height = 480
     fig.layout.paper_bgcolor = "#0c0e14"
@@ -192,3 +189,6 @@ def draw_high_fidelity_research_chart(df, ticker, metrics, suggested_sl, suggest
     return fig
 
 # ==================== MASTER ASSISTANT WORKSPACE ENTRY ====================
+# 🎯 PLACED FIRST DOWN THE SCRIPT: Forces the query search text box to show up immediately
+user_query = st.text_input("💬 Query Your Research Agent (e.g., 'Perform comprehensive macro research on Gold Ounce Futures'):", value="GOLD")
+
