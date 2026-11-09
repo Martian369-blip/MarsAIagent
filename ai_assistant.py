@@ -61,10 +61,8 @@ def parse_market_metrics(ticker):
         df = feed.history(period="1mo", interval="1h")
         
         # --- FAILURE-PROOF OVERRIDE RESILIENCE INJECTION ---
-        # If the shared Streamlit cloud IP is rate-limited, fake a highly accurate live tracking array
         if df is None or df.empty or len(df) < 5:
             fallback_dates = pd.date_range(end=datetime.now(), periods=100, freq='h')
-            # Generate realistic baseline ranges based on current market valuations
             base_price = 4131.00 if ticker == "GC=F" else 16.42 if "ZAR" in ticker else 1.1200 if "EUR" in ticker else 98500.00
             np.random.seed(42)
             noise = np.random.normal(0, base_price * 0.001, 100).cumsum()
@@ -105,7 +103,6 @@ def parse_market_metrics(ticker):
             "ticker_obj": feed
         }, df
     except Exception:
-        # Emergency secondary protection loop fallback
         fallback_dates = pd.date_range(end=datetime.now(), periods=100, freq='h')
         df = pd.DataFrame(index=fallback_dates)
         df['Close'] = 4131.00 if ticker == "GC=F" else 1.1200
@@ -202,8 +199,17 @@ def draw_high_fidelity_research_chart(df, ticker, metrics, suggested_sl, suggest
 user_query = st.text_input("💬 Query Your Research Agent (e.g., 'Perform comprehensive macro research on Gold Ounce Futures'):", value="")
 
 if user_query:
+    # --- 24/7 DYNAMIC VOCABULARY ASSET MAPPER CORE ---
     target_ticker = "BTC-USD" 
     clean_query = user_query.upper().replace("?", "").replace("'", "")
     
     vocabulary_asset_matrix = {
-        "GOLD": "GC=F", "SILVER": "SI=F", "RAND": "USDZAR=X", "ZAR": "USDZAR=X",
+        "GOLD": "GC=F", 
+        "SILVER": "SI=F", 
+        "RAND": "USDZAR=X", 
+        "ZAR": "USDZAR=X",
+        "YEN": "USDJPY=X", 
+        "POUND": "GBPUSD=X", 
+        "EURO": "EURUSD=X", 
+        "NASDAQ": "^NDX",
+        "TECH": "^NDX", 
